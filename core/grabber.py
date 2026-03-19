@@ -1,8 +1,9 @@
 """
 grabber.py
 The Banner Grabber
-Connects to each open port on a discovered device and reads
-the raw response banner to identify the manufacturer and device type.
+Connects to each open port, tries multiple probes to extract
+a banner, then matches against fingerprints.json to identify
+the manufacturer and device type.
 """
 
 import socket
@@ -10,15 +11,24 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Optional
 
 from core.models import Device, OpenPort
 
 logger = logging.getLogger(__name__)
 
-BANNER_TIMEOUT = 3       # seconds to wait for a banner response
-BANNER_MAX_BYTES = 512   # max bytes to read from each port
+BANNER_TIMEOUT   = 3
+BANNER_MAX_BYTES = 512
 FINGERPRINTS_PATH = Path("analysis/fingerprints.json")
+
+# Probes sent to a port to elicit a banner response.
+# Tried in order — first non-empty response wins.
+PROBES = [
+    b"GET / HTTP/1.0\r\nHost: muhafiz\r\n\r\n",                 # HTTP GET
+    b"HEAD / HTTP/1.0\r\nHost: muhafiz\r\n\r\n",                # HTTP HEAD
+    b"OPTIONS / RTSP/1.0\r\nCSeq: 1\r\n\r\n",                  # RTSP (cameras)
+    b"\r\n",                                                      # bare newline (telnet/ftp)
+    b"",                                                          # passive — just read
+]
 
 
 class BannerGrabber:
@@ -26,11 +36,11 @@ class BannerGrabber:
     def __init__(self):
         self.fingerprints = self._load_fingerprints()
 
+    # ── Load fingerprint database ──────────────────────────
 
     def _load_fingerprints(self) -> list[dict]:
-        """Load device signatures from fingerprints.json."""
         if not FINGERPRINTS_PATH.exists():
-            logger.warning("fingerprints.json not found — device identification will be limited.")
+            logger.warning("fingerprints.json not found — device identification limited.")
             return []
         try:
             data = json.loads(FINGERPRINTS_PATH.read_text())
@@ -41,87 +51,88 @@ class BannerGrabber:
             logger.error(f"Failed to load fingerprints.json: {e}")
             return []
 
+    # ── Grab banner with multiple probes ──────────────────
 
     def _grab_banner(self, ip: str, port: int) -> str:
         """
-        Open a TCP connection to ip:port and read the first
-        BANNER_MAX_BYTES bytes of the response.
-        Returns empty string if connection fails or times out.
+        Try multiple probe types against ip:port.
+        Returns the first non-empty response, or empty string.
         """
-        try:
-            with socket.create_connection((ip, port), timeout=BANNER_TIMEOUT) as sock:
-                # Send a generic HTTP requestmany devices respond to this
-                # even if they are not web servers
-                sock.sendall(b"GET / HTTP/1.0\r\nHost: muhafiz\r\n\r\n")
-                banner = sock.recv(BANNER_MAX_BYTES).decode("utf-8", errors="ignore")
-                logger.debug(f"  Banner from {ip}:{port} — {repr(banner[:80])}")
-                return banner.strip()
-        except (socket.timeout, ConnectionRefusedError, OSError):
-            return ""
+        for probe in PROBES:
+            try:
+                with socket.create_connection((ip, port), timeout=BANNER_TIMEOUT) as sock:
+                    if probe:
+                        sock.sendall(probe)
+                    banner = sock.recv(BANNER_MAX_BYTES).decode("utf-8", errors="ignore").strip()
+                    if banner:
+                        logger.debug(f"  Banner [{ip}:{port}] probe={repr(probe[:20])} → {repr(banner[:80])}")
+                        return banner
+            except (socket.timeout, ConnectionRefusedError, OSError):
+                continue
+        return ""
 
+    # ── Match banner against fingerprint DB ───────────────
 
     def _fingerprint(self, port: int, banner: str) -> tuple[str, str]:
         """
-        Compare a banner against all loaded signatures.
-        Returns (device_type, manufacturer) tuple.
-        Falls back to ("unknown", "unknown") if no match found.
+        Returns (device_type, manufacturer).
+        Matches if port matches AND any banner_contains string
+        is found in the banner (case-insensitive).
+        Falls back to port-only match if banner is empty.
         """
         banner_lower = banner.lower()
 
+        # Pass 1: port + banner match
         for sig in self.fingerprints:
-            sig_port = sig.get("port")
-            sig_banner = sig.get("banner_contains", "").lower()
+            if sig.get("port") != port:
+                continue
 
-            # Port must match AND banner must contain the signature string
-            if sig_port == port and sig_banner and sig_banner in banner_lower:
-                logger.debug(
-                    f"  Fingerprint match: {sig.get('manufacturer')} "
-                    f"{sig.get('device_type')} on port {port}"
-                )
-                return sig.get("device_type", "unknown"), sig.get("manufacturer", "unknown")
+            match_strings = sig.get("banner_contains", [])
+            if isinstance(match_strings, str):
+                match_strings = [match_strings]
+
+            for ms in match_strings:
+                if ms and ms.lower() in banner_lower:
+                    logger.debug(f"  Fingerprint match: '{ms}' → {sig.get('manufacturer')} {sig.get('device_type')}")
+                    return sig.get("device_type", "unknown"), sig.get("manufacturer", "unknown")
+
+        # Pass 2: if banner is empty, return first port-only match
+        # so we at least know the likely device type from the port
+        if not banner:
+            for sig in self.fingerprints:
+                if sig.get("port") == port:
+                    logger.debug(f"  Port-only match on {port} → {sig.get('manufacturer')} {sig.get('device_type')}")
+                    return sig.get("device_type", "unknown"), sig.get("manufacturer", "unknown")
 
         return "unknown", "unknown"
 
-
    
 
-    def _sanitize_banner(self, banner: str) -> str:
-        """Remove IP addresses from a banner before storing."""
+    def _sanitize_banner(self, banner: str) -> str: #remove ip and mac before entering to DB
         return re.sub(r"\b\d{1,3}(\.\d{1,3}){3}\b", "[ip]", banner)
 
-
     def enrich_device(self, device: Device) -> Device:
-        """
-        For each open port on a Device, grab the banner and
-        run fingerprint matching to fill in device_type and manufacturer.
-        Returns the same Device object with enriched OpenPort data.
-        """
         logger.info(f"Grabbing banners for {device.ip} ({len(device.ports)} port(s))...")
+        enriched = []
 
-        enriched_ports = []
-        for open_port in device.ports:
-            banner = self._grab_banner(device.ip, open_port.port)
-            device_type, manufacturer = self._fingerprint(open_port.port, banner)
+        for op in device.ports:
+            banner       = self._grab_banner(device.ip, op.port)
+            dtype, mfr   = self._fingerprint(op.port, banner)
 
-            enriched_port = OpenPort(
-                port=open_port.port,
-                protocol=open_port.protocol,
-                service=open_port.service,
-                banner=self._sanitize_banner(banner) or open_port.banner,
-                device_type=device_type,
-                manufacturer=manufacturer,
-            )
-            enriched_ports.append(enriched_port)
+            enriched.append(OpenPort(
+                port=op.port,
+                protocol=op.protocol,
+                service=op.service,
+                banner=self._sanitize_banner(banner) or op.banner,
+                device_type=dtype,
+                manufacturer=mfr,
+            ))
 
-        device.ports = enriched_ports
+        device.ports = enriched
         return device
 
     def enrich_all(self, devices: list[Device]) -> list[Device]:
-        """
-        Run banner grabbing and fingerprinting across all
-        discovered devices Returns enriched Device list
-        """
-        logger.info(f"Banner Grabber starting on {len(devices)} device(s)...")
-        enriched = [self.enrich_device(device) for device in devices]
+        logger.info(f"Banner Grabber starting — {len(devices)} device(s)...")
+        result = [self.enrich_device(d) for d in devices]
         logger.info("Banner Grabber complete.")
-        return enriched
+        return result
