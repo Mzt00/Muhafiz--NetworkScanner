@@ -1,0 +1,48 @@
+name: Signature issue
+
+on:
+  repository_dispatch:
+    types: [new-signature]
+
+jobs:
+  open_issue:
+    name: Open sig-candidate issue
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create signature review issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const payload = context.payload.client_payload;
+
+            const body = `
+            ## New signature candidate
+
+            A new unknown banner has reached the **maintainer review** threshold.
+
+            | Field | Value |
+            |---|---|
+            | Port | \`${payload.port}\` |
+            | Banner snippet | \`${payload.banner_snippet}\` |
+            | Device type guess | \`${payload.device_type}\` |
+            | Manufacturer guess | \`${payload.manufacturer}\` |
+            | Risk score | \`${payload.risk_score}\` |
+            | Shodan match | \`${payload.shodan_match}\` |
+            | Submissions | \`${payload.submission_count}\` |
+
+            ## Review
+
+            If this looks correct, add the finalised signature to \`analysis/fingerprints.json\` and label this PR \`sig-candidate\` to trigger an automatic release.
+
+            If it looks wrong or malicious, close this issue and label it \`sig-rejected\`.
+            `;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Sig candidate] Port ${payload.port} — ${payload.device_type}`,
+              body: body,
+              labels: ["sig-candidate"]
+            });
