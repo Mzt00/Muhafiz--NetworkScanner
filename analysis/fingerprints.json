@@ -1,0 +1,1107 @@
+{
+  "meta": {
+    "version": "0.1.0",
+    "total_signatures": 85,
+    "updated_at": "2026-03-20T00:00:00Z",
+    "description": "Muhafiz device fingerprint database \u2014 verified Shodan banner strings"
+  },
+  "signatures": [
+    {
+      "port": 80,
+      "banner_contains": [
+        "Hikvision IP Camera",
+        "App-webs",
+        "DVRDVS-Webs",
+        "HWIPCamera",
+        "Server: Webs",
+        "Server: web\r\nX-Frame-Options: SAMEORIGIN"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Hikvision",
+      "risk_base": 9,
+      "notes": "Hikvision \u2014 2.1M Shodan results. Banner: Server: Webs / App-webs"
+    },
+    {
+      "port": 8000,
+      "banner_contains": [
+        "Hikvision IP Camera",
+        "App-webs",
+        "DVRDVS-Webs",
+        "HWIPCamera",
+        "Hikvision-Webs"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Hikvision",
+      "risk_base": 9,
+      "notes": "Hikvision DVR port 8000"
+    },
+    {
+      "port": 8080,
+      "banner_contains": [
+        "Hikvision IP Camera",
+        "App-webs",
+        "HWIPCamera"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Hikvision",
+      "risk_base": 9,
+      "notes": "Hikvision alternate port"
+    },
+    {
+      "port": 554,
+      "banner_contains": [
+        "Hikvision",
+        "HWIPCamera",
+        "hikvision"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Hikvision",
+      "risk_base": 9,
+      "notes": "Hikvision RTSP"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "IPCam Client",
+        "IPCamera",
+        "IPCamera_Logo"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Generic IP Camera",
+      "risk_base": 8,
+      "notes": "IPCam Client \u2014 46K Shodan results. Title: IPCam Client"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "GeoHttpServer",
+        "GeoVision",
+        "geovision"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "GeoVision",
+      "risk_base": 8,
+      "notes": "GeoVision \u2014 42K results. Banner: Server: GeoHttpServer"
+    },
+    {
+      "port": 8080,
+      "banner_contains": [
+        "ContaCam",
+        "contacam"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "ContaCam",
+      "risk_base": 7,
+      "notes": "ContaCam webcam software \u2014 26K Shodan results"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "VVTK-HTTP-Server",
+        "Vivotek",
+        "vivotek"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Vivotek",
+      "risk_base": 8,
+      "notes": "Vivotek \u2014 20K results. Banner: Server: VVTK-HTTP-Server"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Avigilon",
+        "avigilon"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Avigilon",
+      "risk_base": 9,
+      "notes": "Avigilon enterprise camera \u2014 17K Shodan results"
+    },
+    {
+      "port": 554,
+      "banner_contains": [
+        "AXIS",
+        "Axis Network Camera",
+        "axis-media",
+        "AXIS Q",
+        "AXIS P",
+        "AXIS M",
+        "AXIS F",
+        "AXIS A"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Axis Communications",
+      "risk_base": 9,
+      "notes": "AXIS RTSP stream"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "AXIS",
+        "Axis Network Camera",
+        "Server: AXIS",
+        "axis-media/axis-document"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Axis Communications",
+      "risk_base": 9,
+      "notes": "AXIS HTTP web interface"
+    },
+    {
+      "port": 81,
+      "banner_contains": [
+        "DVR",
+        "NVR",
+        "uc-httpd",
+        "NETSurveillance",
+        "WebDVR",
+        "iDVR"
+      ],
+      "device_type": "dvr",
+      "manufacturer": "Generic DVR",
+      "risk_base": 9,
+      "notes": "Generic DVR port 81 \u2014 5K Shodan results. Banner: uc-httpd 1.0.0"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "uc-httpd",
+        "NETSurveillance",
+        "DVR Web",
+        "NVR Web",
+        "WebDVR",
+        "iDVR",
+        "DVR_H"
+      ],
+      "device_type": "dvr",
+      "manufacturer": "Generic DVR",
+      "risk_base": 9,
+      "notes": "Generic DVR port 80 \u2014 banner: Server: uc-httpd 1.0.0"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Netwave IP Camera",
+        "Netwave IP Camera Content-Length: 2574",
+        "Netwave"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Netwave",
+      "risk_base": 8,
+      "notes": "Netwave \u2014 1767 Shodan results. Exact banner: Netwave IP Camera Content-Length: 2574"
+    },
+    {
+      "port": 81,
+      "banner_contains": [
+        "Blue Iris",
+        "blue iris",
+        "ui3 -",
+        "BlueIris"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Blue Iris",
+      "risk_base": 8,
+      "notes": "Blue Iris NVR \u2014 1493 results. Title: ui3 - / blue iris remote view"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Blue Iris",
+        "blue iris remote view",
+        "ui3 -"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Blue Iris",
+      "risk_base": 8,
+      "notes": "Blue Iris NVR on port 80"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Merit LILIN Ent. Co., Ltd",
+        "Merit LILIN",
+        "LILIN"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Merit LILIN",
+      "risk_base": 8,
+      "notes": "Merit LILIN \u2014 467 results. Banner: WWW-Authenticate: Merit LILIN Ent. Co., Ltd"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "ACTi",
+        "acti",
+        "ACTI Corporation"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "ACTi",
+      "risk_base": 8,
+      "notes": "ACTi IP cameras \u2014 371 Shodan results"
+    },
+    {
+      "port": 8081,
+      "banner_contains": [
+        "Yawcam",
+        "yawcam",
+        "Yawcam webcam viewer httpd"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Yawcam",
+      "risk_base": 7,
+      "notes": "Yawcam \u2014 336 results. Product: Yawcam webcam viewer httpd"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "+tm01+",
+        "WVC80N",
+        "WVC54G",
+        "WVC54GCA"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Linksys",
+      "risk_base": 8,
+      "notes": "Linksys webcam \u2014 302 results. Title: +tm01+"
+    },
+    {
+      "port": 8080,
+      "banner_contains": [
+        "webcamxp",
+        "webcamXP",
+        "Server: webcamxp"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "webcamXP",
+      "risk_base": 7,
+      "notes": "webcamXP \u2014 109 results. Banner: server: webcamxp"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "i-Catcher Console",
+        "i-Catcher",
+        "icatcher"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "i-Catcher",
+      "risk_base": 7,
+      "notes": "i-Catcher CCTV \u2014 79 results. Banner: Server: i-Catcher Console"
+    },
+    {
+      "port": 8080,
+      "banner_contains": [
+        "webcam 7",
+        "webcam7",
+        "Server: webcam 7"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "webcam 7",
+      "risk_base": 7,
+      "notes": "webcam 7 \u2014 55 results. Banner: Server: webcam 7"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Network Camera VB-M600",
+        "VB-M600",
+        "VB-S",
+        "VB-H",
+        "CANON HTTP Server"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Canon",
+      "risk_base": 7,
+      "notes": "Canon VB security camera \u2014 22 results"
+    },
+    {
+      "port": 554,
+      "banner_contains": [
+        "Dahua",
+        "dahua",
+        "DH-SD",
+        "DH-IPC",
+        "Private"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Dahua Technology",
+      "risk_base": 9,
+      "notes": "Dahua RTSP"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Dahua",
+        "dahua",
+        "DH-SD",
+        "DH-IPC",
+        "Web Service"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Dahua Technology",
+      "risk_base": 9,
+      "notes": "Dahua HTTP"
+    },
+    {
+      "port": 37777,
+      "banner_contains": [
+        "Dahua",
+        "dahua",
+        "DH-"
+      ],
+      "device_type": "dvr",
+      "manufacturer": "Dahua Technology",
+      "risk_base": 9,
+      "notes": "Dahua DVR port 37777"
+    },
+    {
+      "port": 554,
+      "banner_contains": [
+        "Reolink",
+        "reolink",
+        "REOLINK"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Reolink",
+      "risk_base": 8,
+      "notes": "Reolink RTSP"
+    },
+    {
+      "port": 9000,
+      "banner_contains": [
+        "Reolink",
+        "reolink"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Reolink",
+      "risk_base": 8,
+      "notes": "Reolink control port"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "DCS-",
+        "D-Link Network Camera",
+        "D-Link",
+        "DCS-932L",
+        "DCS-5300"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "D-Link",
+      "risk_base": 8,
+      "notes": "D-Link DCS camera"
+    },
+    {
+      "port": 88,
+      "banner_contains": [
+        "Foscam",
+        "foscam",
+        "FI8910W",
+        "FI9821W"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Foscam",
+      "risk_base": 8,
+      "notes": "Foscam default port 88"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Foscam",
+        "foscam"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Foscam",
+      "risk_base": 8,
+      "notes": "Foscam port 80"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Amcrest",
+        "amcrest"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Amcrest",
+      "risk_base": 8,
+      "notes": "Amcrest IP camera (Dahua OEM)"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Uniview",
+        "uniview",
+        "UNV",
+        "IPC3614"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Uniview",
+      "risk_base": 8,
+      "notes": "Uniview IP camera"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Hanwha",
+        "Samsung Techwin",
+        "QNV-",
+        "XNV-",
+        "SNV-"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Hanwha Vision",
+      "risk_base": 8,
+      "notes": "Hanwha / Samsung Techwin camera"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Bosch Security",
+        "BOSCH",
+        "Dinion",
+        "FlexiDome"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Bosch Security",
+      "risk_base": 8,
+      "notes": "Bosch Security camera"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Sony Network Camera",
+        "SONY",
+        "SNC-",
+        "SNC-VM",
+        "SNC-VB"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Sony",
+      "risk_base": 7,
+      "notes": "Sony SNC network camera"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Panasonic Network Camera",
+        "Panasonic",
+        "WV-",
+        "BB-HCM"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Panasonic",
+      "risk_base": 7,
+      "notes": "Panasonic network camera"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Pelco",
+        "pelco",
+        "Sarix",
+        "Spectra"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Pelco",
+      "risk_base": 8,
+      "notes": "Pelco IP camera"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "MOBOTIX",
+        "Mobotix",
+        "mobotix",
+        "mx-"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Mobotix",
+      "risk_base": 8,
+      "notes": "Mobotix IP camera"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Grandstream",
+        "GXV3611",
+        "GXV3615",
+        "GXV3672"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Grandstream",
+      "risk_base": 7,
+      "notes": "Grandstream GXV IP camera"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Luma IP Camera",
+        "LUM-510",
+        "LUM-"
+      ],
+      "device_type": "ip_camera",
+      "manufacturer": "Luma Surveillance",
+      "risk_base": 8,
+      "notes": "Luma IP camera \u2014 seen in Shodan live data"
+    },
+    {
+      "port": 5000,
+      "banner_contains": [
+        "Synology",
+        "DiskStation",
+        "DSM",
+        "synology"
+      ],
+      "device_type": "nas",
+      "manufacturer": "Synology",
+      "risk_base": 8,
+      "notes": "Synology DSM HTTP"
+    },
+    {
+      "port": 5001,
+      "banner_contains": [
+        "Synology",
+        "DiskStation",
+        "DSM"
+      ],
+      "device_type": "nas",
+      "manufacturer": "Synology",
+      "risk_base": 8,
+      "notes": "Synology DSM HTTPS"
+    },
+    {
+      "port": 8080,
+      "banner_contains": [
+        "QNAP",
+        "QTS",
+        "qnap",
+        "NAS Web"
+      ],
+      "device_type": "nas",
+      "manufacturer": "QNAP",
+      "risk_base": 8,
+      "notes": "QNAP NAS"
+    },
+    {
+      "port": 443,
+      "banner_contains": [
+        "QNAP",
+        "QTS",
+        "qnap"
+      ],
+      "device_type": "nas",
+      "manufacturer": "QNAP",
+      "risk_base": 8,
+      "notes": "QNAP NAS HTTPS"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "ReadyNAS",
+        "Netgear NAS",
+        "readynas"
+      ],
+      "device_type": "nas",
+      "manufacturer": "Netgear",
+      "risk_base": 7,
+      "notes": "Netgear ReadyNAS"
+    },
+    {
+      "port": 9000,
+      "banner_contains": [
+        "WDMyCloud",
+        "My Cloud",
+        "Western Digital",
+        "wd-"
+      ],
+      "device_type": "nas",
+      "manufacturer": "Western Digital",
+      "risk_base": 7,
+      "notes": "WD My Cloud"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "RT-AC",
+        "RT-AX",
+        "AsusWRT",
+        "asuswrt",
+        "ASUS RT"
+      ],
+      "device_type": "router",
+      "manufacturer": "ASUS",
+      "risk_base": 8,
+      "notes": "ASUS router"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "TP-LINK",
+        "TP-Link",
+        "Archer",
+        "tplink"
+      ],
+      "device_type": "router",
+      "manufacturer": "TP-Link",
+      "risk_base": 7,
+      "notes": "TP-Link router"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "NETGEAR",
+        "Netgear",
+        "Nighthawk",
+        "Orbi",
+        "readyshare"
+      ],
+      "device_type": "router",
+      "manufacturer": "Netgear",
+      "risk_base": 7,
+      "notes": "Netgear router"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Linksys",
+        "linksys",
+        "Velop",
+        "WRT54"
+      ],
+      "device_type": "router",
+      "manufacturer": "Linksys",
+      "risk_base": 7,
+      "notes": "Linksys router"
+    },
+    {
+      "port": 8291,
+      "banner_contains": [
+        "MikroTik",
+        "RouterOS",
+        "mikrotik"
+      ],
+      "device_type": "router",
+      "manufacturer": "MikroTik",
+      "risk_base": 8,
+      "notes": "MikroTik Winbox port 8291"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "DD-WRT",
+        "ddwrt"
+      ],
+      "device_type": "router",
+      "manufacturer": "DD-WRT",
+      "risk_base": 8,
+      "notes": "DD-WRT custom firmware router"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "OpenWrt",
+        "openwrt",
+        "LuCI"
+      ],
+      "device_type": "router",
+      "manufacturer": "OpenWrt",
+      "risk_base": 7,
+      "notes": "OpenWrt router \u2014 LuCI interface"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "pfSense",
+        "pfsense"
+      ],
+      "device_type": "router",
+      "manufacturer": "Netgate",
+      "risk_base": 8,
+      "notes": "pfSense firewall/router"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Ubiquiti",
+        "ubiquiti",
+        "UniFi",
+        "airOS"
+      ],
+      "device_type": "router",
+      "manufacturer": "Ubiquiti",
+      "risk_base": 8,
+      "notes": "Ubiquiti UniFi / airOS"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "CANON HTTP Server",
+        "Canon",
+        "imageRUNNER",
+        "iR-ADV",
+        "Network Camera VB"
+      ],
+      "device_type": "printer",
+      "manufacturer": "Canon",
+      "risk_base": 4,
+      "notes": "Canon \u2014 6587 Shodan results. Banner: Server: CANON HTTP Server"
+    },
+    {
+      "port": 9100,
+      "banner_contains": [
+        "Canon",
+        "CANON",
+        "iR-ADV",
+        "imageRUNNER"
+      ],
+      "device_type": "printer",
+      "manufacturer": "Canon",
+      "risk_base": 4,
+      "notes": "Canon JetDirect"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "HP-ChaiSOE",
+        "HP LaserJet",
+        "HP Color",
+        "HP OfficeJet",
+        "HP DeskJet",
+        "Hewlett-Packard"
+      ],
+      "device_type": "printer",
+      "manufacturer": "HP",
+      "risk_base": 4,
+      "notes": "HP printer \u2014 real banner: HP-ChaiSOE"
+    },
+    {
+      "port": 9100,
+      "banner_contains": [
+        "HP",
+        "JetDirect",
+        "Hewlett-Packard",
+        "LaserJet"
+      ],
+      "device_type": "printer",
+      "manufacturer": "HP",
+      "risk_base": 4,
+      "notes": "HP JetDirect port"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "EPSON-HTTP",
+        "Epson",
+        "EPSON",
+        "AL-",
+        "ET-"
+      ],
+      "device_type": "printer",
+      "manufacturer": "Epson",
+      "risk_base": 4,
+      "notes": "Epson \u2014 1456 results. Banner: Server: EPSON-HTTP"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "syncthru web service",
+        "SyncThru",
+        "Samsung Printer",
+        "Samsung SCX",
+        "Samsung CLX"
+      ],
+      "device_type": "printer",
+      "manufacturer": "Samsung",
+      "risk_base": 4,
+      "notes": "Samsung SyncThru \u2014 974 Shodan results"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Xerox",
+        "xerox",
+        "WorkCentre",
+        "ColorQube",
+        "Phaser"
+      ],
+      "device_type": "printer",
+      "manufacturer": "Xerox",
+      "risk_base": 4,
+      "notes": "Xerox printer"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Printer Type: Lexmark",
+        "Lexmark",
+        "lexmark"
+      ],
+      "device_type": "printer",
+      "manufacturer": "Lexmark",
+      "risk_base": 4,
+      "notes": "Lexmark \u2014 banner: Printer Type: Lexmark"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Brother",
+        "MFC-",
+        "DCP-",
+        "HL-",
+        "Location: /main/main.html"
+      ],
+      "device_type": "printer",
+      "manufacturer": "Brother",
+      "risk_base": 4,
+      "notes": "Brother printer \u2014 banner: Location: /main/main.html debut"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "OctoPrint",
+        "octoprint",
+        "Octoprint"
+      ],
+      "device_type": "printer",
+      "manufacturer": "OctoPrint",
+      "risk_base": 5,
+      "notes": "OctoPrint 3D printer controller"
+    },
+    {
+      "port": 9999,
+      "banner_contains": [
+        "TP-Link",
+        "Kasa",
+        "smartplug",
+        "tplink"
+      ],
+      "device_type": "smart_plug",
+      "manufacturer": "TP-Link",
+      "risk_base": 5,
+      "notes": "TP-Link Kasa smart plug"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Shelly",
+        "shelly",
+        "shellyplug"
+      ],
+      "device_type": "smart_plug",
+      "manufacturer": "Shelly",
+      "risk_base": 5,
+      "notes": "Shelly smart relay"
+    },
+    {
+      "port": 4070,
+      "banner_contains": [
+        "Amazon",
+        "Echo",
+        "Alexa",
+        "amazon"
+      ],
+      "device_type": "smart_hub",
+      "manufacturer": "Amazon",
+      "risk_base": 4,
+      "notes": "Amazon Echo"
+    },
+    {
+      "port": 8008,
+      "banner_contains": [
+        "Chromecast",
+        "Google Cast",
+        "eureka_dongle"
+      ],
+      "device_type": "smart_hub",
+      "manufacturer": "Google",
+      "risk_base": 4,
+      "notes": "Google Chromecast"
+    },
+    {
+      "port": 1400,
+      "banner_contains": [
+        "Sonos",
+        "sonos",
+        "ZonePlayer"
+      ],
+      "device_type": "media_server",
+      "manufacturer": "Sonos",
+      "risk_base": 5,
+      "notes": "Sonos speaker"
+    },
+    {
+      "port": 32400,
+      "banner_contains": [
+        "Plex",
+        "X-Plex",
+        "Plex Media Server"
+      ],
+      "device_type": "media_server",
+      "manufacturer": "Plex",
+      "risk_base": 6,
+      "notes": "Plex Media Server"
+    },
+    {
+      "port": 8096,
+      "banner_contains": [
+        "Jellyfin",
+        "Emby",
+        "jellyfin",
+        "emby",
+        "EmbyServer"
+      ],
+      "device_type": "media_server",
+      "manufacturer": "Jellyfin/Emby",
+      "risk_base": 6,
+      "notes": "Jellyfin or Emby"
+    },
+    {
+      "port": 5060,
+      "banner_contains": [
+        "SIP",
+        "INVITE sip",
+        "OPTIONS sip",
+        "Asterisk",
+        "FreePBX"
+      ],
+      "device_type": "voip_phone",
+      "manufacturer": "Generic VoIP",
+      "risk_base": 6,
+      "notes": "SIP VoIP \u2014 frequently scanned by attackers"
+    },
+    {
+      "port": 5060,
+      "banner_contains": [
+        "Grandstream",
+        "GXP",
+        "GXV",
+        "HT7",
+        "HT8"
+      ],
+      "device_type": "voip_phone",
+      "manufacturer": "Grandstream",
+      "risk_base": 6,
+      "notes": "Grandstream VoIP"
+    },
+    {
+      "port": 5060,
+      "banner_contains": [
+        "Yealink",
+        "yealink"
+      ],
+      "device_type": "voip_phone",
+      "manufacturer": "Yealink",
+      "risk_base": 6,
+      "notes": "Yealink VoIP phone"
+    },
+    {
+      "port": 80,
+      "banner_contains": [
+        "Polycom",
+        "polycom",
+        "Server: lighttpd"
+      ],
+      "device_type": "voip_phone",
+      "manufacturer": "Polycom",
+      "risk_base": 6,
+      "notes": "Polycom video/voice \u2014 real banner: Server: lighttpd"
+    },
+    {
+      "port": 5900,
+      "banner_contains": [
+        "RFB 003.008",
+        "authentication disabled",
+        "RFB",
+        "VNC"
+      ],
+      "device_type": "unknown",
+      "manufacturer": "unknown",
+      "risk_base": 9,
+      "notes": "VNC \u2014 45K Shodan results. Banner: RFB 003.008 / authentication disabled"
+    },
+    {
+      "port": 5901,
+      "banner_contains": [
+        "RFB 003.008",
+        "authentication disabled",
+        "RFB"
+      ],
+      "device_type": "unknown",
+      "manufacturer": "unknown",
+      "risk_base": 9,
+      "notes": "VNC port 5901"
+    },
+    {
+      "port": 23,
+      "banner_contains": [
+        "login:",
+        "Username:",
+        "Password:",
+        "BusyBox",
+        "Linux",
+        "root@",
+        "HACKED-ROUTER"
+      ],
+      "device_type": "unknown",
+      "manufacturer": "unknown",
+      "risk_base": 9,
+      "notes": "Telnet open \u2014 critical"
+    },
+    {
+      "port": 3389,
+      "banner_contains": [
+        "\u0003\u0000",
+        "RDP",
+        "Remote Desktop",
+        "attention",
+        "encrypted"
+      ],
+      "device_type": "unknown",
+      "manufacturer": "unknown",
+      "risk_base": 9,
+      "notes": "RDP \u2014 brute force risk"
+    },
+    {
+      "port": 445,
+      "banner_contains": [
+        "SMB",
+        "Samba",
+        "Windows",
+        "\u00ffSMB",
+        "Authentication: disabled"
+      ],
+      "device_type": "unknown",
+      "manufacturer": "unknown",
+      "risk_base": 10,
+      "notes": "SMB \u2014 WannaCry vector"
+    },
+    {
+      "port": 21,
+      "banner_contains": [
+        "FTP",
+        "vsftpd",
+        "ProFTPD",
+        "FileZilla",
+        "220 ",
+        "230 Login successful",
+        "Anonymous access allowed"
+      ],
+      "device_type": "unknown",
+      "manufacturer": "unknown",
+      "risk_base": 8,
+      "notes": "FTP \u2014 anonymous access possible"
+    },
+    {
+      "port": 5555,
+      "banner_contains": [
+        "Android Debug Bridge",
+        "Device",
+        "ADB"
+      ],
+      "device_type": "phone",
+      "manufacturer": "Android Device",
+      "risk_base": 8,
+      "notes": "ADB exposed \u2014 705 Shodan results. Full device access possible"
+    }
+  ]
+}
