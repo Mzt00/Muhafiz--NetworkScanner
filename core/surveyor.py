@@ -1,6 +1,5 @@
 """
 surveyor.py
-Module B - The Surveyor
 Performs ARP ping sweep across the local subnet to discover
 all connected devices, then runs Nmap service detection on each.
 """
