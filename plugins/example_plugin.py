@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class ReoLinkPlugin(BasePlugin):
     name        = "Reolink Camera Plugin"
-    version     = "1.0.0"
+    version     = "0.1.0"
     author      = "Muhafiz Community"
     description = "Identifies Reolink IP cameras on port 9000 and RTSP port 554"
 
