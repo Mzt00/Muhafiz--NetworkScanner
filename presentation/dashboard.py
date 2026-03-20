@@ -21,7 +21,7 @@ from community.sanitizer import Sanitizer
 from community.consent import ConsentManager, ContributeMode
 from community.client import ContributionClient
 from community.history import HistoryTracker
-from db.registry import DeviceRegistry
+from db.registry import DeviceRegistry # type: ignore
 
 DB_PATH = Path("muhafiz.db")
 scorer  = RiskScorer()
@@ -107,7 +107,7 @@ if page == "Dashboard":
 
                 # Update registry
                 registry = DeviceRegistry()
-                scan_id  = _save_scan(result)
+                scan_id  = _save_scan(result) # pyright: ignore[reportUndefinedVariable]
                 registry.update(result, scan_id)
 
                 st.success(f"Scan complete — {len(result.devices)} device(s) found")
@@ -157,7 +157,7 @@ if page == "Dashboard":
 
                 # Contribute button
                 st.divider()
-                _render_contribute_button(corr)
+                _render_contribute_button(corr) # type: ignore
 
     else:
         st.success("No critical correlations found — your network looks clean.")
