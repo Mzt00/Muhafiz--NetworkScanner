@@ -16,7 +16,7 @@ Example:
 
     class MyPlugin(BasePlugin):
         name = "My Camera Plugin"
-        version = "0.1.0"
+        version = "1.0.0"
         author = "Your Name"
 
         def fingerprint(self, port: int, banner: str) -> DeviceMatch | None:
@@ -34,9 +34,10 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
-from core.models import ScanResult, CriticalCorrelation
+from core.models import ScanResult, ExposureFinding
 
 
+# ── Match result returned by a plugin ─────────────────────
 
 @dataclass
 class DeviceMatch:
@@ -46,14 +47,18 @@ class DeviceMatch:
     confidence:   float = 1.0  # 0.0 to 1.0 — how confident the plugin is
     notes:        str   = ""
 
+
+# ── Base plugin class ──────────────────────────────────────
+
 class BasePlugin(ABC):
 
     # Plugin metadata — override in subclass
     name:        str = "Unnamed Plugin"
-    version:     str = "0.1.0"
+    version:     str = "1.0.0"
     author:      str = "Unknown"
     description: str = ""
 
+    # ── Required method ────────────────────────────────────
 
     @abstractmethod
     def fingerprint(self, port: int, banner: str) -> Optional[DeviceMatch]:
@@ -70,6 +75,8 @@ class BasePlugin(ABC):
         """
         pass
 
+    # ── Optional hooks ─────────────────────────────────────
+
     def on_scan_complete(self, result: ScanResult) -> None:
         """
         Called after a full scan completes.
@@ -82,18 +89,18 @@ class BasePlugin(ABC):
         """
         pass
 
-    def on_critical_found(self, correlation: CriticalCorrelation) -> None:
+    def on_critical_found(self, finding: ExposureFinding) -> None:
         """
-        Called immediately when a critical correlation is found
-        during analysis — before the full scan completes.
-        Override to trigger real-time alerts e.g. push
-        notifications, Slack messages, or SMS.
+        Called when a high-risk ExposureFinding is found during analysis.
+        Override to trigger real-time alerts e.g. push notifications,
+        Slack messages, or SMS.
 
         Args:
-            correlation: The CriticalCorrelation that was found
+            finding: The ExposureFinding that was found
         """
         pass
 
+    # ── String representation ──────────────────────────────
 
     def __repr__(self) -> str:
         return f"<Plugin: {self.name} v{self.version} by {self.author}>"
