@@ -16,11 +16,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from core.models import ScanResult, CriticalCorrelation
+from core.models import ScanResult
 
 logger = logging.getLogger(__name__)
 
+# Always resolve relative to the project root regardless of
+# where Python's working directory is at runtime
 DB_PATH = Path("muhafiz.db")
+
 
 @dataclass
 class RegistryEntry:
@@ -39,6 +42,7 @@ class RegistryEntry:
     resolved:           bool
 
 
+
 @dataclass
 class ChangelogEntry:
     mac_prefix:  str
@@ -52,6 +56,7 @@ class DeviceRegistry:
 
     def __init__(self):
         self._init_db()
+
 
     def _init_db(self):
         with sqlite3.connect(DB_PATH) as conn:
@@ -90,10 +95,10 @@ class DeviceRegistry:
         """
         Called after each scan completes.
         For every critical correlation found:
-          - If device is new to registry  insert + log 'first_seen'
+          - If device is new to registry → insert + log 'first_seen'
           - If device already exists:
-              - If new port found  log 'new_port'
-              - Otherwise  log 'still_exposed'
+              - If new port found → log 'new_port'
+              - Otherwise → log 'still_exposed'
           - Updates exposure_count, last_exposed, risk score
         """
         for correlation in result.correlations:
@@ -103,7 +108,7 @@ class DeviceRegistry:
             existing = self._get_by_mac(mac_prefix)
 
             if existing is None:
-                #new exposed device
+                # Brand new exposed device
                 self._insert(
                     mac_prefix=mac_prefix,
                     ip=device.ip,
@@ -212,6 +217,7 @@ class DeviceRegistry:
         ) for r in rows]
 
     def stats(self) -> dict:
+        """Aggregate stats for the dashboard registry panel."""
         with sqlite3.connect(DB_PATH) as conn:
             total = conn.execute(
                 "SELECT COUNT(*) FROM exposed_device_registry"
@@ -248,12 +254,16 @@ class DeviceRegistry:
             },
         }
 
+  
+
     def mark_all_viewed(self):
+        """Clear the is_new flag — called when user opens the registry panel."""
         with sqlite3.connect(DB_PATH) as conn:
             conn.execute("UPDATE exposed_device_registry SET is_new = 0")
             conn.commit()
 
     def mark_resolved(self, mac_prefix: str):
+        """User has fixed this exposure — mark as resolved."""
         with sqlite3.connect(DB_PATH) as conn:
             conn.execute("""
                 UPDATE exposed_device_registry
@@ -270,7 +280,7 @@ class DeviceRegistry:
         )
         logger.info(f"Device {mac_prefix} marked as resolved.")
 
-   #interna db helper functions
+    # ── Internal DB helpers ────────────────────────────────
 
     def _get_by_mac(self, mac_prefix: str) -> Optional[dict]:
         with sqlite3.connect(DB_PATH) as conn:
