@@ -1,6 +1,8 @@
 """
 dashboard.py
+Presentation Layer — Streamlit Security Scoreboard
 Main UI for Muhafiz. Run with:
+    streamlit run presentation/dashboard.py
 """
 
 import sys
@@ -14,17 +16,17 @@ from datetime import datetime
 from pathlib import Path
 
 from core import run_scan
-from analysis.engine import LogicEngine
 from analysis.scorer import RiskScorer
 from analysis.updater import FingerprintUpdater
 from community.sanitizer import Sanitizer
 from community.consent import ConsentManager, ContributeMode
 from community.client import ContributionClient
 from community.history import HistoryTracker
-from db.registry import DeviceRegistry # type: ignore
+from db.registry import DeviceRegistry
 
 DB_PATH = Path("muhafiz.db")
 scorer  = RiskScorer()
+
 
 
 st.set_page_config(
@@ -33,6 +35,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
 
 st.markdown("""
 <style>
@@ -56,7 +59,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
 
 
 with st.sidebar:
@@ -92,6 +94,7 @@ with st.sidebar:
 if page == "Dashboard":
 
     st.title("Security Scoreboard")
+
     col1, col2 = st.columns([3, 1])
     with col2:
         run_btn = st.button("Run Scan", type="primary", use_container_width=True)
@@ -100,14 +103,12 @@ if page == "Dashboard":
         with st.spinner("Scanning your network..."):
             try:
                 result = run_scan()
-                engine = LogicEngine()
-                result = engine.analyse(result)
                 st.session_state["last_result"] = result
                 st.session_state["scan_time"]   = datetime.utcnow()
 
                 # Update registry
                 registry = DeviceRegistry()
-                scan_id  = _save_scan(result) # pyright: ignore[reportUndefinedVariable]
+                scan_id  = _save_scan(result)
                 registry.update(result, scan_id)
 
                 st.success(f"Scan complete — {len(result.devices)} device(s) found")
@@ -120,8 +121,6 @@ if page == "Dashboard":
     if result is None:
         st.info("No scan results yet. Click **Run Scan** to start.")
         st.stop()
-
-
     m1, m2, m3, m4 = st.columns(4)
 
     with m1:
@@ -157,7 +156,7 @@ if page == "Dashboard":
 
                 # Contribute button
                 st.divider()
-                _render_contribute_button(corr) # type: ignore
+                _render_contribute_button(corr)
 
     else:
         st.success("No critical correlations found — your network looks clean.")
@@ -171,6 +170,8 @@ if page == "Dashboard":
                 f"→ external port {leak.external_port}/{leak.protocol} "
                 f"— {leak.description}"
             )
+
+  
     st.subheader("All Devices")
     if result.devices:
         rows = []
@@ -190,6 +191,8 @@ if page == "Dashboard":
                     ),
                 })
         st.dataframe(rows, use_container_width=True)
+
+   
     st.subheader("Shodan — WAN Exposure")
     if result.exposed_ports:
         shodan_rows = []
@@ -218,6 +221,7 @@ elif page == "Device Registry":
     registry = DeviceRegistry()
     stats    = registry.stats()
 
+   
     s1, s2, s3, s4 = st.columns(4)
     s1.metric("Total exposed",        stats["total_exposed"])
     s2.metric("New since last view",  stats["new_since_last_view"])
@@ -225,7 +229,6 @@ elif page == "Device Registry":
     s4.metric("Highest risk score",   stats["highest_risk_score"])
 
     st.divider()
-
     entries = registry.get_all()
     registry.mark_all_viewed()
 
@@ -306,8 +309,6 @@ elif page == "Contributions":
     h4.metric("Queued (offline)",  stats["queued"])
 
     st.divider()
-
-  
     entries = history.get_all()
     if not entries:
         st.info("No contributions yet.")
@@ -326,7 +327,6 @@ elif page == "Contributions":
         st.dataframe(rows, use_container_width=True)
 
     st.divider()
-
     st.subheader("Manage history")
     st.warning(
         "Clearing local history only removes records from this device. "
@@ -392,8 +392,6 @@ elif page == "Settings":
         else:
             st.info("Already up to date.")
 
-
-#helper fnctions
 
 def _render_contribute_button(corr):
     """Show the contribute button and consent dialog for a finding."""
