@@ -1,16 +1,12 @@
 """
 ghost.py
 Module A - The Ghost
-Queries Censys for all indexed services on the user's public WAN IP.
-Uses the censys Python SDK (pip install censys).
+Queries Censys REST API directly using Personal Access Token.
+No SDK required — works with free tier.
 
 Credentials required in .env:
-    CENSYS_API_ID=your_organization_id      (short string e.g. DjiyRVDb)
-    CENSYS_API_SECRET=your_pat_token        (long string starting with censys_)
-
-Get credentials at: accounts.censys.io/settings/personal-access-tokens
-  - CENSYS_API_ID     = the Token ID shown in the token list (short string)
-  - CENSYS_API_SECRET = the full PAT value copied when the token was created
+    CENSYS_API_ID=DjiyRVDb          (Token ID — short string)
+    CENSYS_API_SECRET=your_full_pat (Full PAT token)
 """
 
 import os
@@ -21,17 +17,13 @@ from typing import Optional
 
 import requests
 from dotenv import load_dotenv
-from censys.search import CensysHosts
-from censys.common.exceptions import (
-    CensysException,
-    CensysUnauthorizedException,
-    CensysRateLimitExceededException,
-)
 
 from core.models import ExposedPort
 
 load_dotenv()
 logger = logging.getLogger(__name__)
+
+CENSYS_HOST_URL = "https://search.censys.io/api/v2/hosts/{ip}"
 
 
 class GhostScanner:
@@ -42,23 +34,17 @@ class GhostScanner:
 
         if not api_id or not api_secret:
             raise ValueError(
-                "CENSYS_API_ID and CENSYS_API_SECRET not found in .env.\n"
-                "  CENSYS_API_ID     = Token ID (short string e.g. DjiyRVDb)\n"
-                "  CENSYS_API_SECRET = Full PAT token (starts with censys_)\n"
-                "Get both at: accounts.censys.io/settings/personal-access-tokens"
+                "CENSYS_API_ID and CENSYS_API_SECRET not found in .env."
             )
 
-        self.hosts = CensysHosts(api_id=api_id, api_secret=api_secret)
-        logger.info("GhostScanner initialised — Censys SDK ready.")
+        # Censys REST API uses HTTP Basic Auth
+        # api_id = username, api_secret = password
+        self.auth = (api_id, api_secret)
+        logger.info("GhostScanner initialised — Censys REST API ready.")
 
     # ── Check network connectivity ─────────────────────────
 
     def is_connected(self) -> bool:
-        """
-        Check if the machine has an active internet connection.
-        Attempts to open a socket to Google DNS (8.8.8.8:53).
-        Returns True if connected, False otherwise.
-        """
         try:
             socket.setdefaulttimeout(5)
             socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(("8.8.8.8", 53))
@@ -71,7 +57,6 @@ class GhostScanner:
     # ── Get public WAN IP ──────────────────────────────────
 
     def get_wan_ip(self) -> str:
-        """Detect the user's current public IP address."""
         if not self.is_connected():
             raise RuntimeError(
                 "No internet connection. "
@@ -89,23 +74,9 @@ class GhostScanner:
 
     def scan(self, wan_ip: Optional[str] = None) -> list[ExposedPort]:
         """
-        Query Censys for all indexed services on the WAN IP.
-        Returns a list of ExposedPort objects.
-        Returns empty list gracefully on any API error.
-
-        Censys view() response:
-        {
-          'ip': '1.2.3.4',
-          'services': [
-            {
-              'port': 80,
-              'service_name': 'HTTP',
-              'transport_protocol': 'TCP',
-              'banner': '...',
-              'observed_at': '2024-01-01T00:00:00.000Z',
-            }
-          ]
-        }
+        Query Censys REST API for all indexed services on the WAN IP.
+        Uses HTTP Basic Auth: api_id as username, api_secret as password.
+        Returns empty list gracefully on any error.
         """
         if not wan_ip:
             wan_ip = self.get_wan_ip()
@@ -117,65 +88,71 @@ class GhostScanner:
         logger.info(f"Querying Censys for {wan_ip}...")
 
         try:
-            host = self.hosts.view(wan_ip)
-
-        except CensysUnauthorizedException:
-            logger.error(
-                "Censys credentials invalid. "
-                "Check CENSYS_API_ID and CENSYS_API_SECRET in .env.\n"
-                "  CENSYS_API_ID     = Token ID (short string e.g. DjiyRVDb)\n"
-                "  CENSYS_API_SECRET = Full PAT value (starts with censys_)"
+            response = requests.get(
+                CENSYS_HOST_URL.format(ip=wan_ip),
+                auth=self.auth,
+                timeout=10,
             )
-            return []
 
-        except CensysRateLimitExceededException:
-            logger.warning("Censys rate limit reached — skipping WAN scan.")
-            return []
-
-        except CensysException as e:
-            error_str = str(e).lower()
-            if "404" in error_str or "not found" in error_str:
+            if response.status_code == 404:
                 logger.info(f"Censys has no data for {wan_ip} — your IP is clean.")
                 return []
-            logger.warning(f"Censys API error: {e} — continuing with LAN-only scan.")
-            return []
 
+            if response.status_code == 401:
+                logger.error(
+                    "Censys credentials invalid (401). "
+                    "Check CENSYS_API_ID and CENSYS_API_SECRET in .env."
+                )
+                return []
+
+            if response.status_code == 429:
+                logger.warning("Censys rate limit reached — skipping WAN scan.")
+                return []
+
+            if response.status_code != 200:
+                logger.warning(
+                    f"Censys returned HTTP {response.status_code} — "
+                    "continuing with LAN-only scan."
+                )
+                return []
+
+            data     = response.json()
+            result   = data.get("result", {})
+            services = result.get("services", [])
+            exposed  = []
+
+            for service in services:
+                ep = ExposedPort(
+                    port=service.get("port", 0),
+                    protocol=service.get("transport_protocol", "TCP").lower(),
+                    service=service.get("service_name", "unknown"),
+                    banner=service.get("banner", "")[:500],
+                    cves=self._extract_cves(service),
+                    last_seen=self._parse_timestamp(service.get("observed_at")),
+                )
+                exposed.append(ep)
+                logger.debug(
+                    f"  Found: port {ep.port}/{ep.protocol} — {ep.service}"
+                )
+
+            logger.info(
+                f"Censys returned {len(exposed)} exposed port(s) for {wan_ip}"
+            )
+            return exposed
+
+        except requests.exceptions.Timeout:
+            logger.warning("Censys request timed out — continuing with LAN-only scan.")
+            return []
+        except requests.exceptions.ConnectionError:
+            logger.warning("Could not reach Censys — continuing with LAN-only scan.")
+            return []
         except Exception as e:
             logger.warning(f"Unexpected error querying Censys: {e}")
             return []
 
-        # ── Parse services ─────────────────────────────────
-        services = host.get("services", [])
-        exposed  = []
-
-        for service in services:
-            ep = ExposedPort(
-                port=service.get("port", 0),
-                protocol=service.get("transport_protocol", "TCP").lower(),
-                service=service.get("service_name", "unknown"),
-                banner=service.get("banner", "")[:500],
-                cves=self._extract_cves(service),
-                last_seen=self._parse_timestamp(service.get("observed_at")),
-            )
-            exposed.append(ep)
-            logger.debug(
-                f"  Found: port {ep.port}/{ep.protocol} — {ep.service}"
-            )
-
-        logger.info(
-            f"Censys returned {len(exposed)} exposed port(s) for {wan_ip}"
-        )
-        return exposed
-
     # ── Helpers ────────────────────────────────────────────
 
     def _extract_cves(self, service: dict) -> list[str]:
-        """
-        Extract CVE IDs from a Censys service entry.
-        Free tier returns empty list — CVE data requires paid plan.
-        Handles both list [{'cve_id': 'CVE-...'}] and
-        dict {'CVE-...': {}} formats defensively.
-        """
         vulns = service.get("vulns", [])
         if isinstance(vulns, list):
             return [
@@ -188,16 +165,8 @@ class GhostScanner:
         return []
 
     def _parse_timestamp(self, ts: Optional[str]) -> Optional[datetime]:
-        """
-        Parse Censys RFC3339 timestamp into a datetime object.
-        Censys format examples:
-          2024-01-01T00:00:00.000Z
-          2024-01-01T00:00:00.000000000Z
-        Strategy: strip timezone, strip sub-seconds, parse clean.
-        """
         if not ts:
             return None
-        # Strip timezone suffix and sub-second precision
         ts = ts.rstrip("Z").split("+")[0].split(".")[0]
         try:
             return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S")
