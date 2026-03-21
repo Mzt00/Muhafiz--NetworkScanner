@@ -14,16 +14,20 @@ import logging
 from typing import Optional
 
 from plugins.base import BasePlugin, DeviceMatch
-from core.models import ScanResult, CriticalCorrelation
+from core.models import ScanResult, ExposureFinding
 
 logger = logging.getLogger(__name__)
 
 
 class ReoLinkPlugin(BasePlugin):
+
+    # ── Plugin metadata ────────────────────────────────────
     name        = "Reolink Camera Plugin"
     version     = "0.1.0"
     author      = "Muhafiz Community"
     description = "Identifies Reolink IP cameras on port 9000 and RTSP port 554"
+
+    # ── Fingerprint method ─────────────────────────────────
 
     def fingerprint(self, port: int, banner: str) -> Optional[DeviceMatch]:
         """
@@ -64,22 +68,24 @@ class ReoLinkPlugin(BasePlugin):
 
         return None
 
-    def on_critical_found(self, correlation: CriticalCorrelation) -> None:
+    # ── Optional: real-time alert on critical finding ──────
+
+    def on_critical_found(self, finding: ExposureFinding) -> None:
         """
         Called when a critical correlation is found.
         This example just logs it — replace with your own
         alert logic e.g. push notification, Slack, SMS.
         """
-        if correlation.device.ports:
-            op = correlation.device.ports[0]
+        if finding.device.ports:
+            op = finding.device.ports[0]
             if op.manufacturer == "Reolink":
                 logger.warning(
                     f"[ReoLinkPlugin] ALERT: Reolink camera at "
-                    f"{correlation.device.ip} is exposed on port "
-                    f"{correlation.exposed_port.port} — risk {correlation.risk_score}/10"
+                    f"{finding.device.ip} is exposed on external port "
+                    f"{finding.mapping.external_port} — risk {finding.risk_score}/10"
                 )
 
-  
+    # ── Optional: post-scan summary ────────────────────────
 
     def on_scan_complete(self, result: ScanResult) -> None:
         """
