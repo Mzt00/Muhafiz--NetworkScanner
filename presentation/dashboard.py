@@ -61,6 +61,160 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+# ── Helper functions (defined before page logic) ──────────
+
+def _render_registry_entries(entries, registry):
+    if not entries:
+        st.info("No devices recorded yet.")
+        return
+    for entry in entries:
+        badge = "🆕 " if entry.is_new else ""
+        cam   = "📷 " if entry.is_camera else ""
+        with st.expander(
+            f"{badge}{cam}{entry.manufacturer} {entry.device_type} "
+            f"— {entry.last_ip} "
+            f"| Risk {entry.highest_risk_score}/10 "
+            f"| Seen {entry.scan_count}x "
+            f"| Exposed {entry.exposure_count}x",
+            expanded=entry.is_new
+        ):
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown(f"**MAC prefix:** `{entry.mac_prefix}`")
+                st.markdown(f"**Last IP:** `{entry.last_ip}`")
+                st.markdown(f"**Hostname:** {entry.hostname or '—'}")
+                st.markdown(f"**Type:** {entry.device_type}")
+                st.markdown(f"**Manufacturer:** {entry.manufacturer}")
+                st.markdown(f"**Camera:** {'Yes' if entry.is_camera else 'No'}")
+            with c2:
+                st.markdown(f"**Open ports:** {entry.open_ports}")
+                st.markdown(f"**Highest risk:** {entry.highest_risk_score}/10")
+                st.markdown(
+                    f"**Highest confidence:** {entry.highest_confidence}% "
+                    f"({RiskScorer.confidence_label(entry.highest_confidence)})"
+                )
+                st.markdown(f"**Times seen:** {entry.scan_count}")
+                st.markdown(f"**Times exposed:** {entry.exposure_count}")
+                st.markdown(f"**First seen:** {entry.first_seen.strftime('%Y-%m-%d')}")
+                st.markdown(f"**Last seen:** {entry.last_seen.strftime('%Y-%m-%d')}")
+
+            changelog = registry.get_changelog(entry.mac_prefix, limit=10)
+            if changelog:
+                st.markdown("**History:**")
+                icons = {
+                    "first_seen":         "🔵",
+                    "first_seen_exposed": "🔴",
+                    "now_exposed":        "🟠",
+                    "new_port":           "🟡",
+                    "still_present":      "⚪",
+                    "resolved":           "🟢",
+                }
+                for log in changelog:
+                    icon = icons.get(log.event, "⚪")
+                    st.caption(
+                        f"{icon} {log.recorded_at.strftime('%Y-%m-%d %H:%M')} "
+                        f"— {log.detail} "
+                        f"(risk {log.risk_score}, conf {log.confidence}%)"
+                    )
+
+            if not entry.resolved:
+                if st.button("Mark as resolved", key=f"resolve_{entry.mac_prefix}"):
+                    registry.mark_resolved(entry.mac_prefix)
+                    st.success("Marked as resolved.")
+                    st.rerun()
+            else:
+                st.success("Resolved")
+
+
+def _render_contribute_button(finding):
+    sanitizer = Sanitizer()
+    preview   = sanitizer.preview(finding)
+
+    with st.expander("Contribute this finding to the community database"):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("**Will be sent (anonymous):**")
+            st.json(preview["will_send"])
+        with col2:
+            st.markdown("**Will be stripped (never sent):**")
+            st.json(preview["will_strip"])
+
+        a1 = st.checkbox(
+            "Only the data above will be sent — no IPs or identifiers.",
+            key=f"a1_{finding.device.ip}_{finding.risk_score}"
+        )
+        a2 = st.checkbox(
+            "I consent to this anonymous data being stored in the community DB.",
+            key=f"a2_{finding.device.ip}_{finding.risk_score}"
+        )
+        a3 = st.checkbox(
+            "I understand contributions are public and permanent.",
+            key=f"a3_{finding.device.ip}_{finding.risk_score}"
+        )
+
+        if st.button(
+            "Submit contribution",
+            disabled=not (a1 and a2 and a3),
+            key=f"submit_{finding.device.ip}_{finding.risk_score}"
+        ):
+            try:
+                payload       = sanitizer.build_payload(finding)
+                valid, reason = sanitizer.validate(payload)
+                if not valid:
+                    st.error(f"Validation failed: {reason}")
+                    return
+                client = ContributionClient()
+                res    = client.submit(payload)
+                ConsentManager().record_consent(
+                    finding.device.ports[0].port if finding.device.ports else 0,
+                    True
+                )
+                st.success(
+                    f"Submitted — status: {res['status']}. "
+                    f"UUID: {res['uuid'][:8]}..."
+                )
+            except Exception as e:
+                st.error(f"Submission failed: {e}")
+
+
+def _save_scan(result) -> int:
+    confirmed   = len([f for f in result.exposure_findings if f.confidence == 100])
+    wan_partial = ""
+    if result.wan_ip:
+        parts = result.wan_ip.split(".")
+        wan_partial = f"{parts[0]}.x.x.x" if len(parts) == 4 else ""
+
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS scans (
+                id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp              TEXT NOT NULL DEFAULT (datetime('now')),
+                subnet                 TEXT NOT NULL,
+                wan_ip_partial         TEXT NOT NULL DEFAULT '',
+                device_count           INTEGER NOT NULL DEFAULT 0,
+                mapping_count          INTEGER NOT NULL DEFAULT 0,
+                exposure_finding_count INTEGER NOT NULL DEFAULT 0,
+                device_finding_count   INTEGER NOT NULL DEFAULT 0,
+                upnp_leak_count        INTEGER NOT NULL DEFAULT 0,
+                confirmed_reachable    INTEGER NOT NULL DEFAULT 0
+            )
+        """)
+        cursor = conn.execute("""
+            INSERT INTO scans
+            (subnet, wan_ip_partial, device_count, mapping_count,
+             exposure_finding_count, device_finding_count,
+             upnp_leak_count, confirmed_reachable)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            result.subnet, wan_partial,
+            len(result.devices), len(result.mappings),
+            len(result.exposure_findings), len(result.device_findings),
+            len(result.upnp_leaks), confirmed,
+        ))
+        conn.commit()
+        return cursor.lastrowid
+
+
 # ── Sidebar ────────────────────────────────────────────────
 with st.sidebar:
     st.title("Muhafiz")
@@ -93,28 +247,47 @@ if page == "Dashboard":
         )
 
     if run_btn:
-        with st.spinner("Scanning your network..."):
-            try:
-                result = run_scan()
-                st.session_state["last_result"] = result
-                st.session_state["scan_time"]   = datetime.utcnow()
+        progress_bar = st.progress(0)
+        status_text  = st.empty()
+        try:
+            status_text.caption("⏳ Checking fingerprint updates...")
+            progress_bar.progress(10)
 
-                scan_id = _save_scan(result)
-                DeviceRegistry().update(result, scan_id)
+            status_text.caption("⏳ ARP sweep — finding devices on LAN...")
+            progress_bar.progress(25)
 
-                st.success(
-                    f"Scan complete — "
-                    f"{len(result.devices)} device(s), "
-                    f"{len(result.exposure_findings)} exposure finding(s), "
-                    f"{len(result.device_findings)} internal finding(s)"
-                )
-            except PermissionError:
-                st.error(
-                    "Administrator privileges required. "
-                    "Please restart terminal as admin and run again."
-                )
-            except Exception as e:
-                st.error(f"Scan error: {e}")
+            result = run_scan()
+
+            status_text.caption("⏳ Saving results...")
+            progress_bar.progress(95)
+
+            st.session_state["last_result"] = result
+            st.session_state["scan_time"]   = datetime.utcnow()
+
+            scan_id = _save_scan(result)
+            DeviceRegistry().update(result, scan_id)
+
+            progress_bar.progress(100)
+            progress_bar.empty()
+            status_text.empty()
+
+            st.success(
+                f"Scan complete — "
+                f"{len(result.devices)} device(s), "
+                f"{len(result.exposure_findings)} exposure finding(s), "
+                f"{len(result.device_findings)} internal finding(s)"
+            )
+        except PermissionError:
+            progress_bar.empty()
+            status_text.empty()
+            st.error(
+                "Administrator privileges required. "
+                "Please restart terminal as admin and run again."
+            )
+        except Exception as e:
+            progress_bar.empty()
+            status_text.empty()
+            st.error(f"Scan error: {e}")
 
     result = st.session_state.get("last_result")
 
@@ -467,8 +640,7 @@ elif page == "Settings":
             updated = fp.check_and_update()
         st.success("Updated." if updated else "Already up to date.")
 
-
-def _render_registry_entries(entries, registry):
+# ── End of file ────────────────────────────────────────────
     if not entries:
         st.info("No devices recorded yet.")
         return
