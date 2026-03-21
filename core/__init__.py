@@ -50,8 +50,6 @@ def run_scan(subnet: str = None) -> ScanResult:
     logger.info("[3/5] Surveyor — scanning local network...")
     surveyor = SurveyorScanner(subnet=subnet)
     devices  = surveyor.scan()
-
-
     logger.info("[4/5] Grabber — fingerprinting devices...")
     grabber = BannerGrabber()
     devices = grabber.enrich_all(devices)
@@ -87,7 +85,6 @@ def run_scan(subnet: str = None) -> ScanResult:
         exposed_ports=exposed_ports,
     )
 
-   
     engine = LogicEngine(plugins=plugins)
     result = engine.analyse(result)
     for plugin in plugins:
