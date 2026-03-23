@@ -1,5 +1,6 @@
 """
 core/__init__.py
+Main scan pipeline — wires all layers together.
 
 Layer order:
   0. Fingerprint auto-update
@@ -18,7 +19,6 @@ from datetime import datetime
 from core.surveyor import SurveyorScanner
 from core.grabber import BannerGrabber
 from core.nat_pmp import NatPmpScanner
-from core.mac_lookup import MacLookup
 from core.models import ScanResult
 from analysis.updater import FingerprintUpdater
 from analysis.engine import LogicEngine
@@ -43,27 +43,23 @@ def run_scan(subnet: str = None) -> ScanResult:
     logger.info("Muhafiz LAN scan starting...")
     logger.info("=" * 50)
 
-   
+    # ── Step 0: Auto-update fingerprints ──────────────────
     logger.info("[0/5] Updater — checking for fingerprint updates...")
     FingerprintUpdater().check_and_update()
 
+    # ── Step 1: Load plugins ───────────────────────────────
     logger.info("[1/5] Loading plugins...")
     plugins = load_plugins()
 
-  
+    # ── Step 2: Surveyor — LAN discovery ──────────────────
     logger.info("[2/5] Surveyor — scanning local network...")
     surveyor = SurveyorScanner(subnet=subnet)
     devices  = surveyor.scan()
 
+    # ── Step 3: Grabber + plugin fingerprinting ────────────
     logger.info("[3/5] Grabber — banner grabbing and fingerprinting...")
     grabber = BannerGrabber()
     devices = grabber.enrich_all(devices)
-
-    # Fills in manufacturer/type for devices banner grabbing
-    # couldn't identify (phones, IoT, generic devices)
-    logger.info("[3b/5] MAC OUI lookup — enriching unknown devices...")
-    mac_lookup = MacLookup()
-    devices    = mac_lookup.enrich_devices(devices)
 
     # Plugins get a pass on still-unknown devices
     if plugins:
@@ -87,6 +83,7 @@ def run_scan(subnet: str = None) -> ScanResult:
                     except Exception as e:
                         logger.warning(f"  Plugin {plugin.name} error: {e}")
 
+    # ── Step 4: WAN IP detection ───────────────────────────
     # Try NAT-PMP first (no API key, LAN only)
     # Fall back to ipify.org (requires internet)
     logger.info("[4/5] WAN IP detection...")
@@ -99,6 +96,7 @@ def run_scan(subnet: str = None) -> ScanResult:
             "Mappings will still be flagged."
         )
 
+    # ── Assemble raw result ────────────────────────────────
     result = ScanResult(
         timestamp=datetime.utcnow(),
         subnet=surveyor.subnet,
@@ -106,7 +104,7 @@ def run_scan(subnet: str = None) -> ScanResult:
         devices=devices,
     )
 
-
+    # ── Step 5: Analysis engine ────────────────────────────
     # Handles: ONVIF → UPnP → Correlation → Verification → Scoring
     logger.info("[5/5] Analysis engine...")
     engine = LogicEngine(plugins=plugins)
@@ -119,6 +117,7 @@ def run_scan(subnet: str = None) -> ScanResult:
         except Exception as e:
             logger.warning(f"Plugin {plugin.name} on_scan_complete error: {e}")
 
+    # ── Summary ────────────────────────────────────────────
     logger.info("=" * 50)
     logger.info(
         f"Scan complete:\n"
@@ -134,6 +133,8 @@ def run_scan(subnet: str = None) -> ScanResult:
 
     return result
 
+
+# ── WAN IP detection ───────────────────────────────────────
 
 def _get_wan_ip() -> str:
     """
