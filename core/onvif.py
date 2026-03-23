@@ -1,7 +1,8 @@
 """
 onvif.py
 Sends WS-Discovery and ONVIF GetDeviceInformation probes
-to confirm whether a device is a camera and extract metadata
+to confirm whether a device is a camera and extract metadata.
+No external library needed — pure HTTP/SOAP over the LAN.
 
 ONVIF is the standard protocol used by 90%+ of IP cameras
 (Hikvision, Dahua, Axis, Reolink, Foscam, Amcrest etc.)
@@ -50,6 +51,8 @@ ONVIF_DEVICE_INFO = """<?xml version="1.0" encoding="UTF-8"?>
 
 class ONVIFProbe:
 
+    # ── WS-Discovery broadcast ─────────────────────────────
+
     def discover(self) -> list[str]:
         """
         Broadcast WS-Discovery probe on the LAN.
@@ -85,6 +88,8 @@ class ONVIFProbe:
         logger.info(f"WS-Discovery found {len(found)} ONVIF device(s)")
         return found
 
+    # ── Probe a specific IP ────────────────────────────────
+
     def probe(self, ip: str) -> Optional[dict]:
         """
         Probe a specific device IP for ONVIF support.
@@ -113,6 +118,8 @@ class ONVIFProbe:
         logger.debug(f"No ONVIF response from {ip}")
         return None
 
+    # ── Send GetDeviceInformation SOAP ─────────────────────
+
     def _get_device_info(self, ip: str, path: str) -> Optional[dict]:
         """
         Send ONVIF GetDeviceInformation SOAP request.
@@ -132,7 +139,18 @@ class ONVIFProbe:
                 )
 
                 if response.status_code in (200, 400, 401):
-                    # Even 401 confirms ONVIF is present
+                    # Must contain ONVIF/SOAP indicators — not just any HTTP response
+                    body = response.text.lower()
+                    onvif_indicators = [
+                        "onvif", "soap", "envelope", "devicemgmt",
+                        "networkvideotr", "www.onvif.org"
+                    ]
+                    if not any(ind in body for ind in onvif_indicators):
+                        logger.debug(
+                            f"ONVIF probe {ip}:{port}{path} got {response.status_code} "
+                            f"but no ONVIF content — skipping (likely false positive)"
+                        )
+                        continue
                     info = self._parse_device_info(response.text)
                     info["onvif_url"]  = url
                     info["http_port"]  = port
@@ -149,6 +167,8 @@ class ONVIFProbe:
 
         return None
 
+    # ── Parse ONVIF XML response ───────────────────────────
+
     def _parse_device_info(self, xml: str) -> dict:
         """
         Extract device info fields from ONVIF XML response.
@@ -161,6 +181,8 @@ class ONVIFProbe:
             "serial":       "",
             "hardware":     "",
         }
+
+        # Extract fields using simple regex — no XML parser needed
         fields = {
             "manufacturer": r"<[^>]*Manufacturer[^>]*>([^<]+)<",
             "model":        r"<[^>]*Model[^>]*>([^<]+)<",
@@ -176,9 +198,13 @@ class ONVIFProbe:
 
         return info
 
+    # ── Check single device ────────────────────────────────
+
     def is_camera(self, ip: str) -> bool:
         """Quick check — returns True if device responds to ONVIF."""
         return self.probe(ip) is not None
+
+    # ── Enrich a device list ───────────────────────────────
 
     def enrich_devices(self, devices: list) -> list:
         """
@@ -191,13 +217,13 @@ class ONVIFProbe:
         onvif_ips = set(self.discover())
 
         for device in devices:
-            #Check if WS-Discovery already confirmed this IP
+            # Check if WS-Discovery already confirmed this IP
             if device.ip in onvif_ips:
                 info = self.probe(device.ip) or {}
                 device.is_camera  = True
                 device.onvif_info = info
 
-                #Update device type and manufacturer if ONVIF gave us better info
+                # Update device type and manufacturer if ONVIF gave us better info
                 if info.get("manufacturer") and device.ports:
                     for port in device.ports:
                         if port.device_type in ("unknown", "ip_camera"):
@@ -211,11 +237,13 @@ class ONVIFProbe:
                 )
                 continue
 
-            #For devices with camera-like ports, try direct probe
-            camera_ports = {554, 8000, 8080, 88}
-            device_ports = {p.port for p in device.ports}
+            # For devices with camera-like ports, try direct probe
+            # Exclude common non-camera ports that overlap (VMware, Windows etc.)
+            camera_ports    = {554, 8000, 8080, 88}
+            non_camera_ports = {902, 912, 135, 139, 445, 3389, 5900}
+            device_ports    = {p.port for p in device.ports}
 
-            if camera_ports & device_ports:
+            if camera_ports & device_ports and not (non_camera_ports & device_ports == device_ports):
                 info = self.probe(device.ip)
                 if info:
                     device.is_camera  = True
